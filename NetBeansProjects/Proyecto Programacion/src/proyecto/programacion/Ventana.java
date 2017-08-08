@@ -6,12 +6,20 @@ package proyecto.programacion;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
 import javax.swing.RowFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.RowFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableModel;
 
 public class Ventana extends JFrame {
@@ -38,11 +46,13 @@ public class Ventana extends JFrame {
     Object[][] data = {};
     private DefaultTableModel model = new DefaultTableModel(data, columnNames);
     private JTable tabla = new JTable(model);
-
+    boolean bandera = true;
     private TableRowSorter<TableModel> rowSorter
             = new TableRowSorter<>(tabla.getModel());
     JLabel buscar = new JLabel("Ingrese la busqueda:");
     JTextField bus = new JTextField(10);
+    ImageIcon iconobusqueda = new ImageIcon("/home/facundo/iconobusqueda.png");
+    JLabel etiquetaicono = new JLabel(iconobusqueda);
     //COMPONENTES MENU
     JMenuBar menubar = new JMenuBar();
     JMenu archivo = new JMenu("Archivo");
@@ -51,6 +61,10 @@ public class Ventana extends JFrame {
     JMenuItem abrir = new JMenuItem("Abrir documento", iconoabrir);
     ImageIcon iconoguardar = new ImageIcon("/home/facundo/guardar.png");
     JMenuItem guardar = new JMenuItem("Guardar como...",iconoguardar);
+    ImageIcon iconoayuda = new ImageIcon("/home/facundo/iconoayuda.png");
+    JMenuItem acerca = new JMenuItem("Acerca de...",iconoayuda);
+    
+
     public Ventana() {
         super("Sistema de Control");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -59,10 +73,15 @@ public class Ventana extends JFrame {
         //EVENTOS MENUBAR
         archivo.setMnemonic(KeyEvent.VK_F);
         abrir.setMnemonic(KeyEvent.VK_E);
-        abrir.setToolTipText("Cargar archivo .txt en la tabla");
+        abrir.setToolTipText("Cargar archivo .csv en la tabla");
         guardar.setMnemonic(KeyEvent.VK_E);
-        guardar.setToolTipText("Guardar tabla en un archivo .txt");
-        
+        guardar.setToolTipText("Guardar tabla en un archivo .csv");
+     //SE AÑADE ACTIONLISTENER AL BOTON GUARDAR   
+        guardar.addActionListener(new BotonGuardar());
+     //SE AÑADE ACTIONLISTENER AL BOTON ABRIR
+        abrir.addActionListener(new BotonAbrir());
+     //SE AÑADE ACTIONLISTENER AL BOTON ACERCA
+        acerca.addActionListener(new Ayuda());
         //SISTEMA PARA AÑADIR ELEMENTOS A LA TABLA
         Object[] row = new Object[3];
         nuevo.addActionListener(new ActionListener() {
@@ -166,7 +185,7 @@ public class Ventana extends JFrame {
 
         });
         
-
+        
         //PANEL PRINCIPAL   
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -187,6 +206,7 @@ public class Ventana extends JFrame {
         panelb.setLayout(new FlowLayout(FlowLayout.LEFT));
         panelb.add(buscar);
         panelb.add(bus);
+        panelb.add(etiquetaicono);
 
         //PANEL3
         panel3.setLayout(new BorderLayout());
@@ -199,6 +219,7 @@ public class Ventana extends JFrame {
         menubar.add(ayuda);
         archivo.add(abrir);
         archivo.add(guardar);
+        ayuda.add(acerca);
         setJMenuBar(menubar);
         //AÑADIR PANELES
         panel.add(panel1);
@@ -208,5 +229,129 @@ public class Ventana extends JFrame {
         add(panel);
 
     }
-
+    //ACTION LISTENER AL BOTON ACERCA
+    public class Ayuda implements ActionListener{
+        @Override
+        public void actionPerformed(ActionEvent e){
+            JOptionPane.showMessageDialog(null,"Proyecto de Porgramacion II\n              "
+                    + "ITS Villada\nAlumnos:\nBarafani,Facundo\nSavino,Juan Cruz","Acerca de...",JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+    //SISTEMA PARA GUARDAR 
+        public String [] [] ConseguirInfo() {
+    int numfilas = model.getRowCount();
+    int numcolumnas = model.getColumnCount();
+    boolean isCapturedTheTitles = false;
+    String matriz [][] = new String[numfilas + 1][numcolumnas];
+    for (int rowIndex = 0;rowIndex<numfilas;rowIndex++){
+        for (int colIndex = 0;colIndex<numcolumnas;colIndex++){
+            if (!isCapturedTheTitles){
+                matriz[0][colIndex] = model.getColumnName(colIndex);
+                isCapturedTheTitles=(rowIndex>0)?true:false;
+            }
+            matriz[rowIndex+1][colIndex] = (String) model.getValueAt((rowIndex),colIndex);
+        }
+    }
+    return matriz;
+}
+        //ACTION LISTENER DEL BOTON GUARDAR
+    public class BotonGuardar implements ActionListener{    
+        @Override
+        public void actionPerformed(java.awt.event.ActionEvent evt){
+            JFileChooser selectorarchivo = new JFileChooser();
+            selectorarchivo.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            int resultado = selectorarchivo.showSaveDialog(panel);
+            if (resultado == JFileChooser.CANCEL_OPTION){
+                return;
+            }
+            File archivo = selectorarchivo.getSelectedFile();
+            try {
+                PrintWriter salida = new PrintWriter (new FileWriter(archivo+".csv"));
+                String data [][] = ConseguirInfo();
+                for(int i = 0; i < data.length;i++){
+                    salida.print(data[i][0]);
+                    for (int j = 1;j < data[i].length; j++){
+                        String word  = data[i][j];
+                        if (word != null) {
+                            salida.print(","+word);
+                        }else{
+                            salida.print(",");
+                        }
+                    }
+                    salida.println();
+                }
+                salida.close();
+            }catch (IOException io ){               
+            }
+        }
+    }
+    //SISTEMA PARA ABRIR ARCHIVO .CSV
+    private File obtenerArchivo(){
+        JFileChooser selectorarchivo = new JFileChooser();
+        FileNameExtensionFilter filtro = new FileNameExtensionFilter("Archivo de Excel .csv","csv");
+        selectorarchivo.setFileFilter(filtro);
+        selectorarchivo.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        int resultado = selectorarchivo.showOpenDialog(this);
+        if(resultado == JFileChooser.CANCEL_OPTION){
+            return null;
+        }else {
+            File archivoSeleccionado=selectorarchivo.getSelectedFile();
+            return archivoSeleccionado;
+        }
+    }
+    //PROCESO DEL ARCHIVO .CSV A LA JTABLE
+    private void procesarCsv(File archivoSeleccionado) throws IOException{
+        BufferedReader input = new BufferedReader(new FileReader(archivoSeleccionado));
+        String linea;
+        String campo;
+        ArrayList<String> columnas = new ArrayList<String>();
+        while ((linea = input.readLine())!= null){
+            ArrayList<String> contenidofilas = new ArrayList<String>();
+            int tamaño = linea.length();
+            int intAux = 0;
+            char arregloCadena [] = new char[tamaño];
+            arregloCadena = linea.toCharArray();
+            for (int i = 0;i < tamaño; i++){
+                if (arregloCadena[i] == ','){
+                    campo = linea.substring(intAux,i);
+                    intAux = i+1;
+                    if (bandera){
+                        columnas.add(campo);
+                    }else {
+                        contenidofilas.add(campo);
+                    }
+                    
+                }else if (i == tamaño - 1){
+                    campo = linea.substring(intAux,i+1);
+                    if (bandera){
+                        columnas.add(campo);
+                        for(int x=0;x<columnas.size();x++){
+                            //model.addColumn(columnas.get(x));
+                        }
+                    }else{
+                        contenidofilas.add(campo);
+                        model.addRow(contenidofilas.toArray());
+                    }
+                    bandera = false;
+                }
+            }
+            
+            
+        }
+        input.close();
+    }
+    //CREAMOS UN ACTIONLISTENER PARA EL BOTON ABRIR
+    public class BotonAbrir implements ActionListener{
+        @Override
+        public void actionPerformed(java.awt.event.ActionEvent evt){
+            File archivoSeleccionado = obtenerArchivo();
+            if (archivoSeleccionado != null){
+                try{
+                    procesarCsv(archivoSeleccionado);
+                }catch(IOException io){
+                    System.out.println(io);
+                }
+            }
+        }
+    }
 }
