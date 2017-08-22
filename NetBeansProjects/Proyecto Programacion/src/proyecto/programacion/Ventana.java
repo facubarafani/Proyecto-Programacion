@@ -13,12 +13,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import javax.swing.RowFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.RowFilter;
+import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableModel;
 
@@ -27,6 +27,9 @@ public class Ventana extends JFrame {
     //CREACION DE PANELES
     JPanel panel = new JPanel();
     JPanel panel1 = new JPanel();
+    JPanel panell = new JPanel();
+    JPanel panelprecio1 = new JPanel();
+    JPanel panelprecio2 = new JPanel();
     JPanel panel2 = new JPanel();
     JPanel panel3 = new JPanel();
     JPanel panelb = new JPanel();
@@ -37,12 +40,16 @@ public class Ventana extends JFrame {
     JTextField tfstock = new JTextField(10);
     JLabel stock = new JLabel("Cantidad de Stock:");
     JTextField s = new JTextField(10);
+    JLabel precio = new JLabel("Precio del Producto:");
+    JTextField tfprecio = new JTextField(10);
+    String lista [] = {"$","USD"};
+    JComboBox signo = new JComboBox(lista);
     //BOTONES PARA AGREGAR,EDITAR Y BORRAR ELEMENTOS DE LA TABLA
     JButton nuevo = new JButton("Agregar");
     JButton modificar = new JButton("Editar");
     JButton eliminar = new JButton("Borrar");
     //COMPONENTES DE LA TABLA
-    String[] columnNames = {"Producto", "Categoria", "Stock"};
+    String[] columnNames = {"Producto", "Categoria", "Stock","Precio"};
     Object[][] data = {};
     private DefaultTableModel model = new DefaultTableModel(data, columnNames);
     private JTable tabla = new JTable(model);
@@ -57,18 +64,26 @@ public class Ventana extends JFrame {
     JMenuBar menubar = new JMenuBar();
     JMenu archivo = new JMenu("Archivo");
     JMenu ayuda = new JMenu("Ayuda");
+    JMenu divisa = new JMenu("Conversor");
     ImageIcon iconoabrir = new ImageIcon("/home/facundo/abrir.png");
     JMenuItem abrir = new JMenuItem("Abrir documento", iconoabrir);
     ImageIcon iconoguardar = new ImageIcon("/home/facundo/guardar.png");
     JMenuItem guardar = new JMenuItem("Guardar como...", iconoguardar);
     ImageIcon iconoayuda = new ImageIcon("/home/facundo/iconoayuda.png");
     JMenuItem acerca = new JMenuItem("Acerca de...", iconoayuda);
-
+    ImageIcon iconoconv = new ImageIcon("/home/facundo/iconodivisa.png");
+    JMenuItem conv = new JMenuItem("Conversor de divisa",iconoconv);
+    //SEPARADORES
+    TitledBorder title;
+    
     public Ventana() {
         super("Sistema de Control");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(600, 500);
         setResizable(false);
+        //SEPARADOR DEL PANEL 1
+        title = BorderFactory.createTitledBorder("Info del Producto");
+        (panel1).setBorder(title);
         //EVENTOS MENUBAR
         archivo.setMnemonic(KeyEvent.VK_F);
         abrir.setMnemonic(KeyEvent.VK_E);
@@ -81,8 +96,10 @@ public class Ventana extends JFrame {
         abrir.addActionListener(new BotonAbrir());
         //SE AÑADE ACTIONLISTENER AL BOTON ACERCA
         acerca.addActionListener(new Ayuda());
+        //SE AÑADE ACTION LISTENER AL BOTON CONVERSOR
+        conv.addActionListener(new Conversor());
         //SISTEMA PARA AÑADIR ELEMENTOS A LA TABLA
-        Object[] row = new Object[3];
+        Object[] row = new Object[4];
         nuevo.addActionListener(new ActionListener() {
 
             @Override
@@ -91,6 +108,7 @@ public class Ventana extends JFrame {
                 row[0] = tp.getText();
                 row[1] = tfstock.getText();
                 row[2] = s.getText();
+                row[3] = (signo.getSelectedItem().toString()+" "+tfprecio.getText());
 
                 model.addRow(row);
             }
@@ -123,6 +141,7 @@ public class Ventana extends JFrame {
                 tp.setText(model.getValueAt(i, 0).toString());
                 tfstock.setText(model.getValueAt(i, 1).toString());
                 s.setText(model.getValueAt(i, 2).toString());
+                tfprecio.setText(model.getValueAt(i,3).toString());
             }
         });
 
@@ -139,6 +158,7 @@ public class Ventana extends JFrame {
                     model.setValueAt(tp.getText(), i, 0);
                     model.setValueAt(tfstock.getText(), i, 1);
                     model.setValueAt(s.getText(), i, 2);
+                    model.setValueAt(tfprecio.getText(), i, 3);
                 } else {
                     JOptionPane.showMessageDialog(null, "Error al Modificar");
                 }
@@ -184,14 +204,25 @@ public class Ventana extends JFrame {
         //PANEL PRINCIPAL   
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        //
+        panell.setLayout(new BoxLayout(panell, BoxLayout.X_AXIS));
         //PANEL1
-        panel1.setLayout(new GridLayout(3, 2));
+        panel1.setLayout(new GridLayout(4, 2));
         panel1.add(producto);
         panel1.add(tp);
         panel1.add(st);
         panel1.add(tfstock);
         panel1.add(stock);
         panel1.add(s);
+        //PANEL PRECIO
+        panelprecio1.setLayout(new FlowLayout(FlowLayout.LEFT));
+        panelprecio1.add(precio);
+        //PANEL PRECIO 2
+        panelprecio2.setLayout(new FlowLayout(FlowLayout.RIGHT));
+        panelprecio2.add(signo);
+        panelprecio2.add(tfprecio);
+        panell.add(panelprecio1);
+        panell.add(panelprecio2);
         //PANEL2
         panel2.setLayout(new FlowLayout(FlowLayout.RIGHT));
         panel2.add(nuevo);
@@ -211,13 +242,16 @@ public class Ventana extends JFrame {
         panel3.add(new JScrollPane(tabla));
         //MENUBAR AL PROGRAMA
         menubar.add(archivo);
+        menubar.add(divisa);
         menubar.add(ayuda);
         archivo.add(abrir);
         archivo.add(guardar);
         ayuda.add(acerca);
+        divisa.add(conv);
         setJMenuBar(menubar);
         //AÑADIR PANELES
         panel.add(panel1);
+        panel.add(panell);
         panel.add(panel2);
         panel.add(panelb);
         panel.add(panel3);
@@ -232,6 +266,15 @@ public class Ventana extends JFrame {
         public void actionPerformed(ActionEvent e) {
             JOptionPane.showMessageDialog(null, "Proyecto de Porgramacion II\n              "
                     + "ITS Villada\nAlumnos:\nBarafani,Facundo\nSavino,Juan Cruz", "Acerca de...", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+    //ACTION LISTENER AL BOTON CONVERSOR
+    public class Conversor implements ActionListener{
+        @Override
+        public void actionPerformed(ActionEvent e){
+            ConversorDivisa cv = new ConversorDivisa();
+            cv.setVisible(true);
+         
         }
     }
 
