@@ -13,6 +13,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import javax.swing.event.DocumentEvent;
@@ -48,6 +49,7 @@ public class Ventana extends JFrame {
     JButton nuevo = new JButton("Agregar");
     JButton modificar = new JButton("Editar");
     JButton eliminar = new JButton("Borrar");
+    JButton eliminart;
     //COMPONENTES DE LA TABLA
     String[] columnNames = {"Producto", "Categoria", "Stock","Precio"};
     Object[][] data = {};
@@ -73,6 +75,7 @@ public class Ventana extends JFrame {
     JMenuItem acerca = new JMenuItem("Acerca de...", iconoayuda);
     ImageIcon iconoconv = new ImageIcon("/home/facundo/iconodivisa.png");
     JMenuItem conv = new JMenuItem("Conversor de divisa",iconoconv);
+    ImageIcon iconoeliminart = new ImageIcon("/home/facundo/iconoeliminartodo.png");
     //SEPARADORES
     TitledBorder title;
     
@@ -84,6 +87,8 @@ public class Ventana extends JFrame {
         //SEPARADOR DEL PANEL 1
         title = BorderFactory.createTitledBorder("Info del Producto");
         (panel1).setBorder(title);
+        //ICONO BOTON ELIMINAR TODO
+        this.eliminart = new JButton(iconoeliminart);
         //EVENTOS MENUBAR
         archivo.setMnemonic(KeyEvent.VK_F);
         abrir.setMnemonic(KeyEvent.VK_E);
@@ -111,6 +116,14 @@ public class Ventana extends JFrame {
                 row[3] = (signo.getSelectedItem().toString()+" "+tfprecio.getText());
 
                 model.addRow(row);
+                
+                Producto producto = new Producto();
+                producto.setCategoria(tfstock.getText());
+                producto.setNombrep(tp.getText());
+                producto.setPrecio(Integer.parseInt(tfprecio.getText()));
+                producto.setStock(Integer.parseInt(s.getText()));
+                
+                System.out.println(producto.toString());
             }
         });
         //SISTEMA PARA ELIMINAR ELEMENTOS A LA TABLA
@@ -124,6 +137,7 @@ public class Ventana extends JFrame {
                 if (i >= 0) {
                     // Eliminar de la lista de la tabla
                     model.removeRow(i);
+                    
                 } else {
                     JOptionPane.showMessageDialog(null, "Error al Eliminar");
                 }
@@ -162,6 +176,13 @@ public class Ventana extends JFrame {
                 } else {
                     JOptionPane.showMessageDialog(null, "Error al Modificar");
                 }
+            }
+        });
+        //SISTEMA PARA BORRAR TODOS LOS ELEMENTOS DE LA TABLA
+        eliminart.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e){
+                model.setRowCount(0);
             }
         });
 
@@ -228,6 +249,7 @@ public class Ventana extends JFrame {
         panel2.add(nuevo);
         panel2.add(modificar);
         panel2.add(eliminar);
+        panel2.add(eliminart);
         //PANEL BUSCAR
         panelb.setLayout(new FlowLayout(FlowLayout.LEFT));
         panelb.add(buscar);
